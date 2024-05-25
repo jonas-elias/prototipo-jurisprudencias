@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Ordenação de Jurisprudências</title>
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .container-master {
+            max-width: 50%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 8px;
+            background-color: #ededed;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .draggable {
+            cursor: grab;
+        }
+
+        .header-img {
+            width: 10%;
+            height: auto;
+            max-height: 200px;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-master mt-5" id="master">
+        <img src="logo.png" alt="Imagem de cabeçalho" class="header-img mb-4">
+        <div class="container-drag">
+            <label for="searchInput" class="mb-2">Buscar Jurisprudências:</label>
+            <div class="row align-items-center">
+                <div class="col-10 align-items-center">
+                    <input placeholder="Decisão do Tribunal Superior de Justiça, cláusulas..." type="text"
+                        class="form-control" id="searchInput">
+                </div>
+                <div class="col-2 text-end">
+                    <button onclick="searchJurisprudencia()" class="btn btn-success w-100">Buscar</button>
+                </div>
+            </div>
+            <div id="results" class="draggable-container container-drag"></div>
+            <div hidden="true" id="prompt"></div>
+        </div>
+        <div class="row align-items-center mt-5" id="buttons-save">
+
+        </div>
+    </div>
+
+    <div id="modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Texto da Jurisprudência</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="jurisprudencia-texto"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js" defer></script>
+
+    <script>
+        let id = null;
+        function searchJurisprudencia() {
+            var searchText = document.getElementById('searchInput').value;
+            fetch('http://127.0.0.1:8000/buscar_jurisprudencias/?texto=' + searchText)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar jurisprudências.');
+                    }
+                    const idAleatorio = response.headers.get('Id')
+                    return response.json()
+                        .then(data => ({ data, idAleatorio }));
+                })
+                .then(({ data, idAleatorio }) => {
+                    var resultsContainer = document.getElementById('results');
+                    resultsContainer.innerHTML = '';
+                    data.forEach(jurisprudencia => {
+                        var resultElement = document.createElement('div');
+                        resultElement.classList.add('result', 'draggable', 'mb-3');
+                        resultElement.setAttribute("draggable", "true");
+                        resultElement.innerHTML = '<p>' + jurisprudencia.texto.substring(0, 80) + '...</p><button type="button" class="btn btn-outline-success" onclick="showJurisprudencia(\'' + encodeURI(jurisprudencia.texto) + '\')">&#9432;</button>';
+                        resultsContainer.appendChild(resultElement);
+                    });
+
+                    id = idAleatorio
+                    let buttons = document.getElementById('buttons-save')
+                    buttons.innerHTML = '<div class="col-2"><button onclick="clearResults()" class="btn btn-danger">Limpar</button></div><div class="col-10 text-end"><button onclick="saveOrder()" class="btn btn-success">Salvar ordem</button></div>'
+                    drag()
+                })
+                .catch(error => console.error('Erro ao buscar jurisprudências:', error));
+        }
+
+        function showJurisprudencia(texto) {
+            document.getElementById('jurisprudencia-texto').innerText = decodeURI(texto);
+            var modal = new bootstrap.Modal(document.getElementById('modal'));
+            modal.show();
+        }
+
+        function clearResults() {
+            location.reload()
+        }
+
+        function saveOrder() {
+            let searchText = document.getElementById('searchInput').value;
+            let divPrompt = document.getElementById("prompt");
+            divPrompt.textContent = searchText;
+
+            let htmlContent = document.getElementById("master").innerHTML;
+
+            fetch('http://127.0.0.1:8000/salvar_jurisprudencias', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ html: htmlContent, id: id })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao salvar o HTML.');
+                    }
+                    console.log('HTML enviado com sucesso para o servidor.');
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+        }
+    </script>
+</body>
+
+</html>
