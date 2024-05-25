@@ -9,9 +9,11 @@ import random
 import uuid
 from fastapi.responses import JSONResponse
 import json
+from openai import OpenAI
 
-import openai
-openai.api_key = ""
+client = OpenAI(
+    api_key="",
+)
 
 qdrant_client = QdrantClient(
     url="https://65899fc3-6f4d-4fed-9a62-02e307b35f13.us-east4-0.gcp.cloud.qdrant.io:6333",
@@ -48,7 +50,7 @@ async def buscar_jurisprudencias(texto: str) -> List[dict]:
             resultados.append(jurisprudencia)
     if not resultados:
         raise HTTPException(status_code=404, detail="Nenhuma jurisprudência encontrada.")
-    with open(f"./prototipo-jurisprudencias/database/{id_aleatorio}_aplicacao.json", "w", encoding="utf-8") as file:
+    with open(f"./busca-jurisprudencias/database/{id_aleatorio}_aplicacao.json", "w", encoding="utf-8") as file:
         resultados_json = json.dumps(resultados)
         file.write(resultados_json)
 
@@ -62,7 +64,7 @@ async def salvar_jurisprudencias(request: Request):
     jurisprudencias_html = body.get('html', '')
     file_name = body.get('id', '')
     if jurisprudencias_html:
-        with open(f"./database/{file_name}_advogado.html", "w", encoding="utf-8") as file:
+        with open(f"./busca-jurisprudencias/database/{file_name}_advogado.html", "w", encoding="utf-8") as file:
             file.write(jurisprudencias_html)
 
 
@@ -72,7 +74,7 @@ async def gerar_defesa(request: Request):
     prompt = body.get('prompt', '')
 
     try:
-        result = openai.ChatCompletion.create(
+        result = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Você é um assistente legal que sempre elabora defesas com base em jurisprudências."},
@@ -81,11 +83,11 @@ async def gerar_defesa(request: Request):
             max_tokens=1500,
             temperature=0.5
         )
-        
-        if not result or 'choices' not in result or len(result['choices']) == 0:
+
+        if len(result.choices) == 0:
             raise HTTPException(status_code=404, detail="Nenhuma defesa foi gerada.")
 
-        response_text = result['choices'][0].get('message', {}).get('content', '')
+        response_text = result.choices[0].message.content
         return {"response": response_text}
 
     except Exception as e:
