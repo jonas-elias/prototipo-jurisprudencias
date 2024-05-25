@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Jurisprudência Chat</title>
+</head>
+<body>
+    <nav id="sidebar">
+        <div class="float-top">
+            <div class="sidebar-controls">
+                <button class="new-chat"><i class="fa fa-plus"></i> Novo chat</button>
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="logo">
+            JurisChat
+        </div>
+
+        <input type="hidden" id="initialQuestion">
+        <div class="view conversation-view">
+            <div class="model-name">
+                <i class="fa fa-bolt"></i> Chat Jurisprudências
+            </div>
+        </div>
+
+        <div id="message-form">
+            <div class="message-wrapper">
+                <textarea id="message" rows="1" placeholder="Faça uma nova pergunta"></textarea>
+                <button id="send-btn" class="send-button"><i class="fa fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
